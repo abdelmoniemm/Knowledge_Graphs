@@ -1,0 +1,52 @@
+prefixes:
+  ex: http://example.org/
+  xsd: http://www.w3.org/2001/XMLSchema#
+
+mappings:
+
+  dq_rules:
+    sources:
+      - ['data.json~jsonpath', '$.rules[*]']
+    s: ex:rule_$(rulecode)
+    po:
+      - [a, ex:DQRule]
+      - [ex:ruleCode, $(rulecode)]
+      - [ex:template, $(dqtemplate)]
+      - [ex:techSystem, $(techsystem)]
+      - [ex:techGroup, $(techgroup)]
+      - [ex:dataset, $(dataset)]
+      - [ex:dataelement, $(dataelement)]
+      - [ex:score, $(score), xsd:decimal]
+      - [ex:failedRecCount, $(failedreccount), xsd:integer]
+      - [ex:totalRecCount, $(totalreccount), xsd:integer]
+
+  field_belongs_to_table:
+    sources:
+      - ['data.json~jsonpath', '$.rules[*]']
+    s: ex:$(dataelement)
+    po:
+      - [a, ex:dataelement]
+      - [ex:belongsTo, ex:$(dataset)]
+
+  table_belongs_to_schema:
+    sources:
+      - ['data.json~jsonpath', '$.rules[*]']
+    s: ex:$(dataset)
+    po:
+      - [a, ex:Table]
+      - [ex:belongsTo, ex:$(techgroup)]
+
+  schema_belongs_to_db:
+    sources:
+      - ['data.json~jsonpath', '$.rules[*]']
+    s: ex:$(techgroup)
+    po:
+      - [a, ex:Schema]
+      - [ex:belongsTo, ex:$(techsystem)]
+
+  database_type:
+    sources:
+      - ['data.json~jsonpath', '$.rules[*]']
+    s: ex:$(techsystem)
+    po:
+      - [a, ex:Database]

@@ -1,0 +1,31 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+.env.*
+venv/
+.venv/
+
+# Also ignore any nested envs
+flask-server/.env
+
+# IDE / OS
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Logs
+*.log

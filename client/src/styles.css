@@ -1,0 +1,72 @@
+:root{
+  --bg:#0b1020;
+  --panel:#121935;
+  --card:#18224b;
+  --text:#e8ecff;
+  --muted:#aab2d9;
+  --accent:#6ea8fe;
+  --accent-2:#8ef0c2;
+  --danger:#ff6b6b;
+  --border:#26315f;
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+
+.container{max-width:1080px;margin:0 auto;padding:28px}
+.header{
+  background: linear-gradient(135deg,var(--panel), #101735);
+  border:1px solid var(--border);
+  border-radius:16px; padding:28px; margin-bottom:20px;
+}
+.title{margin:0 0 6px 0; font-size:22px; letter-spacing:.2px}
+.subtitle{margin:0; color:var(--muted)}
+
+.row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+
+.card{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:18px; margin:16px 0;
+}
+
+label.input{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:10px 12px; border:1px dashed var(--border);
+  border-radius:10px; cursor:pointer; color:var(--muted); background:#12193a;
+}
+label.input input{display:none}
+
+.btn{
+  appearance:none; border:1px solid var(--border); color:var(--text);
+  background:#131b3b; padding:9px 14px; border-radius:10px; cursor:pointer;
+  transition:transform .05s ease, background .15s ease; font-weight:600
+}
+.btn:hover{background:#162155}
+.btn:active{transform:translateY(1px)}
+
+.btn-primary{background:var(--accent); color:#0a1025; border-color:transparent}
+.btn-primary:hover{background:#89b7ff}
+.btn-ghost{background:transparent}
+.btn-danger{background:#30161d; border-color:#5d2230; color:#ffd4da}
+.btn-danger:hover{background:#3a1a23}
+
+.kbd{padding:2px 6px;border:1px solid var(--border);border-radius:6px;background:#111936;color:var(--muted)}
+
+pre.code, .box{
+  background:#0f1530; border:1px solid var(--border);
+  border-radius:12px; padding:14px; overflow:auto;
+}
+pre.code{white-space:pre-wrap}
+
+.alert{color:#ffd2d2; background:#2b1620; border:1px solid #5f2b3a; padding:10px 12px; border-radius:10px}
+
+.table{
+  width:100%; border-collapse:collapse; border:1px solid var(--border);
+  border-radius:12px; overflow:hidden;
+}
+.table th{background:#0f1734; text-align:left; padding:10px 12px; color:var(--muted); font-weight:700}
+.table td{padding:10px 12px; border-top:1px solid var(--border)}
+.badge{display:inline-block; padding:2px 8px; border-radius:999px; background:#0f1734; border:1px solid var(--border); color:var(--muted)}
+.link{color:var(--accent); text-decoration:none}
+.link:hover{text-decoration:underline}
