@@ -49,7 +49,16 @@ venv\Scripts\activate         # on Windows PowerShell
 
 **make sure you installed all libraries and dependencies required to run the back end""
 
-
+needed for schwarz enviroment
+```bash
+-m pip install flask python-dotenv flask-cors requests --proxy http://se1-mwg-p03.schwarz:8054
+-m pip install requests --proxy http://se1-mwg-p03.schwarz:8054   
+-m pip install Flask --proxy http://se1-mwg-p03.schwarz:8054
+-m pip3 install Flask --proxy http://se1-mwg-p03.schwarz:8054
+-m pip install openai --proxy http://se1-mwg-p03.schwarz:8054
+```
+           
+>> 
 ## run the backend
 
 python server.py
@@ -62,6 +71,10 @@ cd ../client
 npm install
 npm start
 ```
+
+**for schwarz enviroment**
+schwarzit.jfrog.io/ui/packages
+
 
 This starts the React UI at http://localhost:3000
 
