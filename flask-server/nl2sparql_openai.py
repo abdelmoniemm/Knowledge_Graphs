@@ -30,6 +30,20 @@ Data model:
 
 Return ONLY one SPARQL query inside a single fenced code block:
 ```sparql
+
+please take this as an example list me all tables and thier scores that have  average score less than 70%? 
+PREFIX ex: <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?dataset (AVG(?score) AS ?averageScore)
+WHERE {
+  ?rule a ex:DQRule .
+  ?rule ex:dataset ?dataset .
+  ?rule ex:score ?score .
+}
+GROUP BY ?dataset
+HAVING (AVG(?score) < xsd:decimal(70))
+this is the way you write the score not 0.7 
 ...query...
 ```"""
 
@@ -115,3 +129,4 @@ def _safe_body(e: requests.HTTPError):
         return e.response.json()
     except Exception:
         return getattr(e.response, "text", "")
+
