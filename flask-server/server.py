@@ -10,9 +10,9 @@ from flask_cors import CORS
 
 from json_transformer import JsonTransformer
 from queries_api import queries_bp
-from graphdb_api import graphdb_bp
-from nl2sparql_openai import nl2sparql_bp
-# near the other imports
+
+from triplestore_api import triplestore_bp
+from nl2sparql_gemini import nl2sparql_bp
 
 
 # after other blueprint registrations
@@ -25,7 +25,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 # Blueprints
-app.register_blueprint(graphdb_bp, url_prefix="/api/graphdb")
+app.register_blueprint(triplestore_bp, url_prefix="/api/graphdb")
 app.register_blueprint(queries_bp,  url_prefix="/api/queries")
 app.register_blueprint(nl2sparql_bp, url_prefix="/api/nl2sparql")
 
@@ -71,6 +71,7 @@ def compile_yarrrml_to_rml():
 def run_rmlmapper_to_ttl():
     return run([
         "docker","run","--rm","-i",
+        "--platform", "linux/amd64",  # <--- ADD THIS LINE to force emulation
         "-v", f"{str(DATA_DIR)}:/data",
         RMLMAPPER_IMAGE,
         "-m","/data/rules.rml.ttl",

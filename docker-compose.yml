@@ -1,0 +1,13 @@
+services:
+  fuseki:
+    image: stain/jena-fuseki:latest
+    # Keep this line for your M1/M2 Mac
+    platform: linux/amd64
+    container_name: fuseki-server
+    ports:
+      - "3030:3030"
+    #environment:
+    #  - ADMIN_PASSWORD=admin
+    # We removed the 'command' line so it starts cleanly
+    volumes:
+      - ./fuseki-data:/fuseki

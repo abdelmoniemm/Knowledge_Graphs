@@ -1,15 +1,17 @@
 import os, re, requests
 from flask import Blueprint, request, jsonify
 
-GRAPHDB_BASE = os.environ.get("GRAPHDB_BASE", "http://localhost:7200")
+GRAPHDB_BASE = os.environ.get("GRAPHDB_BASE", "http://localhost:3030")
 REPO_ID      = os.environ.get("GRAPHDB_REPO", "bachelor2025")
-REPO_URL     = f"{GRAPHDB_BASE.rstrip('/')}/repositories/{REPO_ID}"
+REPO_URL     = f"{GRAPHDB_BASE.rstrip('/')}/{REPO_ID}/sparql"
+DB_USER      = "admin" 
+DB_PASS      = "admin"
 
 QUERIES = {
     "Average score per database (asc)": """
         PREFIX ex: <http://example.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        SELECT ?database (AVG(xsd:decimal(?score)) AS ?avgScore)
+        SELECT ?database (AVG(xsd:double(?score)) AS ?avgScore)
         WHERE { ?rule a ex:DQRule ; ex:techSystem ?database ; ex:score ?score . }
         GROUP BY ?database
         ORDER BY ASC(?avgScore)
@@ -17,7 +19,7 @@ QUERIES = {
     "Average score per schema (asc)": """
         PREFIX ex: <http://example.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        SELECT ?schema (AVG(xsd:decimal(?score)) AS ?avgScore)
+        SELECT ?schema (AVG(xsd:double(?score)) AS ?avgScore)
         WHERE { ?rule a ex:DQRule ; ex:techGroup ?schema ; ex:score ?score . }
         GROUP BY ?schema
         ORDER BY ASC(?avgScore)
@@ -28,14 +30,14 @@ QUERIES = {
         SELECT ?database ?path ?avgScore
         WHERE {
           {
-            SELECT ?database (AVG(xsd:decimal(?score)) AS ?avgScore)
+            SELECT ?database (AVG(xsd:double(?score)) AS ?avgScore)
             WHERE { ?r a ex:DQRule ; ex:techSystem ?database ; ex:score ?score . }
             GROUP BY ?database
           }
           {
             SELECT (MIN(?avg) AS ?minAvg)
             WHERE {
-              SELECT (AVG(xsd:decimal(?score)) AS ?avg)
+              SELECT (AVG(xsd:double(?score)) AS ?avg)
               WHERE { ?r a ex:DQRule ; ex:techSystem ?db ; ex:score ?score . }
               GROUP BY ?db
             }
@@ -50,14 +52,14 @@ QUERIES = {
         SELECT ?database ?schema ?path ?avgScore
         WHERE {
           {
-            SELECT ?database ?schema (AVG(xsd:decimal(?score)) AS ?avgScore)
+            SELECT ?database ?schema (AVG(xsd:double(?score)) AS ?avgScore)
             WHERE { ?r a ex:DQRule ; ex:techSystem ?database ; ex:techGroup ?schema ; ex:score ?score . }
             GROUP BY ?database ?schema
           }
           {
             SELECT (MIN(?avg) AS ?minAvg)
             WHERE {
-              SELECT (AVG(xsd:decimal(?score)) AS ?avg)
+              SELECT (AVG(xsd:double(?score)) AS ?avg)
               WHERE { ?r a ex:DQRule ; ex:techSystem ?db ; ex:techGroup ?sch ; ex:score ?score . }
               GROUP BY ?db ?sch
             }
@@ -72,14 +74,14 @@ QUERIES = {
         SELECT ?database ?schema ?dataset ?path ?avgScore
         WHERE {
           {
-            SELECT ?database ?schema ?dataset (AVG(xsd:decimal(?score)) AS ?avgScore)
+            SELECT ?database ?schema ?dataset (AVG(xsd:double(?score)) AS ?avgScore)
             WHERE { ?r a ex:DQRule ; ex:techSystem ?database ; ex:techGroup ?schema ; ex:dataset ?dataset ; ex:score ?score . }
             GROUP BY ?database ?schema ?dataset
           }
           {
             SELECT (MIN(?avg) AS ?minAvg)
             WHERE {
-              SELECT (AVG(xsd:decimal(?score)) AS ?avg)
+              SELECT (AVG(xsd:double(?score)) AS ?avg)
               WHERE { ?r a ex:DQRule ; ex:techSystem ?db ; ex:techGroup ?sch ; ex:dataset ?ds ; ex:score ?score . }
               GROUP BY ?db ?sch ?ds
             }
@@ -93,12 +95,12 @@ QUERIES = {
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         SELECT ?rule ?ruleCode ?techSystem ?techGroup ?dataset ?dataElement ?path ?score
         WHERE {
-          { SELECT (MIN(xsd:decimal(?s)) AS ?minScore) WHERE { ?r a ex:DQRule ; ex:score ?s . } }
+          { SELECT (MIN(xsd:double(?s)) AS ?minScore) WHERE { ?r a ex:DQRule ; ex:score ?s . } }
           ?rule a ex:DQRule ; ex:score ?score ; ex:techSystem ?techSystem ; ex:techGroup ?techGroup ; ex:dataset ?dataset .
           OPTIONAL { ?rule ex:dataElement ?dataElement }
           OPTIONAL { ?rule ex:dataelement ?dataElement }  # lower-case tolerance
           OPTIONAL { ?rule ex:ruleCode ?ruleCode }
-          FILTER (xsd:decimal(?score) = ?minScore)
+          FILTER (xsd:double(?score) = ?minScore)
           BIND(CONCAT(STR(?techSystem), ".", STR(?techGroup), ".", STR(?dataset),
                       IF(BOUND(?dataElement), CONCAT(".", STR(?dataElement)), "")) AS ?path)
         }
@@ -130,16 +132,29 @@ def _ensure_prefixes(q: str) -> str:
 
 def run_sparql(query: str):
     q = _ensure_prefixes(_normalize_query(query))
-    r = requests.post(
-        REPO_URL,
-        data=q.encode("utf-8"),
-        headers={"Content-Type": "application/sparql-query", "Accept": "application/sparql-results+json"},
-        timeout=60,
-    )
-    if r.status_code != 200:
-        raise requests.HTTPError(f"GraphDB {r.status_code}: {r.text}", response=r)
-    bindings = r.json().get("results", {}).get("bindings", [])
-    return [{k: v.get("value") for k, v in b.items()} for b in bindings]
+    
+    print(f"--> Querying Fuseki: {REPO_URL}")
+    
+    # Fuseki can handle POST with urlencoded 'query' parameter
+    # or POST with Content-Type: application/sparql-query
+    try:
+        r = requests.post(
+            REPO_URL,
+            data={"query": q},
+            headers={"Accept": "application/sparql-results+json"},
+            auth=(DB_USER, DB_PASS),
+            timeout=60,
+        )
+        
+        if r.status_code != 200:
+            print(f"Fuseki Query Error: {r.text}")
+            raise requests.HTTPError(f"Fuseki {r.status_code}: {r.text}", response=r)
+            
+        bindings = r.json().get("results", {}).get("bindings", [])
+        return [{k: v.get("value") for k, v in b.items()} for b in bindings]
+        
+    except requests.exceptions.JSONDecodeError:
+        raise Exception(f"Invalid JSON from Fuseki. Response: {r.text[:200]}")
 
 queries_bp = Blueprint("queries", __name__)
 
